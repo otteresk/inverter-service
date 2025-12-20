@@ -1,13 +1,15 @@
 package net.aahso.homehausen.inverter_service;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
@@ -18,8 +20,8 @@ import reactor.core.publisher.Mono;
 public class Inverter {
 
 	Logger logger = LoggerFactory.getLogger(this.getClass());
-	private static final String API_URL = "/logdata/download";
-	private String sessionID = "xxx";
+	private static final String API_URL = "/processdata";
+	private String sessionID = "xx";
 
 	// injected
 	private final WebClient webClient;
@@ -40,19 +42,59 @@ public class Inverter {
 	}
 
 	// get the data from the inverter
-	public Mono<String> getData(int dayDiff) {
+	public Mono<String> getData() {
 
 		if (this.sessionID == null)
 			return null;
 		if (isSessionIdValid()==false)
 			this.sessionID = InverterAuthenticator.authenticate(this.webClient, this.passwordFilename);
 
-		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("uuuu-MM-dd");
-		LocalDateTime now = LocalDateTime.now();
-		String datumsStr = dtf.format(now.minusDays(dayDiff));
-		// String datumsStr = "2023-09-19";
-		String inputJson = "{ \"begin\": \"" + datumsStr + "\", \"end\": \"" + datumsStr + "\"  }";
-		// System.out.println("JSON in: "+inputJson);
+        // prepate request JSON
+        ObjectMapper objectMapper = new ObjectMapper();
+        ArrayNode procDataArray = objectMapper.createArrayNode();
+        ObjectNode moduleObject;
+        ArrayNode processdataNames;
+
+        // PV array 1
+        moduleObject = objectMapper.createObjectNode();
+        moduleObject.put("moduleid", "devices:local:pv1");
+        processdataNames = objectMapper.createArrayNode();
+        processdataNames.add("P");
+        moduleObject.set("processdataids", processdataNames);
+        procDataArray.add(moduleObject);
+
+        // PV array 2
+        moduleObject = objectMapper.createObjectNode();
+        moduleObject.put("moduleid", "devices:local:pv2");
+        processdataNames = objectMapper.createArrayNode();
+        processdataNames.add("P");
+        moduleObject.set("processdataids", processdataNames);
+        procDataArray.add(moduleObject);
+
+        // Battery
+        moduleObject = objectMapper.createObjectNode();
+        moduleObject.put("moduleid", "devices:local:battery");
+        processdataNames = objectMapper.createArrayNode();
+        processdataNames.add("SoC");
+        processdataNames.add("P");
+        moduleObject.set("processdataids", processdataNames);
+        procDataArray.add(moduleObject);
+
+        // Power Flow
+        moduleObject = objectMapper.createObjectNode();
+        moduleObject.put("moduleid", "devices:local");
+        processdataNames = objectMapper.createArrayNode();
+        processdataNames.add("Grid_P");
+        processdataNames.add("Home_P");
+        processdataNames.add("HomeGrid_P");
+        processdataNames.add("HomeOwn_P");
+        processdataNames.add("HomeBat_P");
+        processdataNames.add("PV2Bat_P");
+        moduleObject.set("processdataids", processdataNames);
+        procDataArray.add(moduleObject);
+
+        String inputJson = procDataArray.toString();
+		System.out.println("JSON in: "+inputJson);
 
 		return this.webClient.post().uri(API_URL).header(HttpHeaders.AUTHORIZATION, "Session " + sessionID)
 				.bodyValue(inputJson).exchangeToMono(this::handleResponse);

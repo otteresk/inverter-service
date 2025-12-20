@@ -14,19 +14,20 @@ public class WebClientConfig {
 	@Autowired
 	private Environment env;
 	
+
 	@Bean
 	public WebClient webClient(WebClient.Builder builder) {
 		//System.out.println("Inverter API URL: "+env.getProperty("dailysun.inverter.apiurl"));
-		return builder
-				.baseUrl(env.getProperty("inverter.apiurl"))
-				.defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
-				.defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-				.build();
+        return builder
+            .baseUrl(env.getProperty("app.inverter.apiurl"))
+            .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
+            .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+            .build();
 	}
 	
 	@Bean
 	public String passwordFilename() {
-		return env.getProperty("inverter.userpasswordfile");
+		return env.getProperty("app.inverter.userpasswordfile");
 	}
 	
 }

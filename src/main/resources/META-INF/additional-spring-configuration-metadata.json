@@ -1,0 +1,12 @@
+{"properties": [
+  {
+    "name": "app.inverter.apiurl",
+    "type": "java.lang.String",
+    "description": "URL of the inverter API"
+  },
+  {
+    "name": "app.inverter.userpasswordfile",
+    "type": "java.lang.String",
+    "description": "File that contains the password for the inverter"
+  }
+]}
