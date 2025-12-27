@@ -8,5 +8,10 @@
     "name": "app.inverter.userpasswordfile",
     "type": "java.lang.String",
     "description": "File that contains the password for the inverter"
+  },
+  {
+    "name": "app.savefilename",
+    "type": "java.lang.String",
+    "description": "File to which data is appended"
   }
 ]}

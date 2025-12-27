@@ -2,31 +2,49 @@ package net.aahso.homehausen.inverter_service;
 
 public class DataPoint {
 
-	public String timeOfDay;
-	public int powerUseFromPV;
-	public int powerUseFromBattery;
-	public int powerUseFromGrid;
-	public int powerToBattery;
-	public int powerToGrid;
-	public int batterySoC;
-	//public int powerFromBattery;
-	//public int powerFromPV;
-	//public int powerHome;
+	private long timeStamp;
+	private int fromPV;
+	private int fromGrid;
+	private int fromBat;
+	private int useHome;
+	private int levelBat;
 	
-	public DataPoint (String time,
-			int pPV,
-			int pBat,
-			int pGrid,
-			int toBat,
-			int toGrid,
-			int batSoC
-			) {
-		this.timeOfDay = time;
-		this.powerUseFromPV = pPV;
-		this.powerUseFromBattery = pBat;
-		this.powerUseFromGrid = pGrid;
-		this.powerToBattery = toBat;
-		this.powerToGrid = toGrid;
-		this.batterySoC = batSoC;
+	public DataPoint (long timeStamp,
+					int PV,
+					int grid,
+					int power_bat,
+					int home,
+					int batSoC){
+		this.timeStamp = timeStamp;
+		this.fromPV = PV;
+		this.fromGrid = grid;
+		this.fromBat = power_bat;
+		this.useHome = home;
+		this.levelBat = batSoC;
 	}
+
+	public long getTimeStamp() {
+		return timeStamp;
+	}	
+
+	public int getFromPV() {
+		return fromPV;
+	}	
+
+	public int getFromGrid() {
+		return fromGrid;
+	}	
+
+	public int getFromBat() {
+		return fromBat;
+	}	
+
+	public int getUseHome() {
+		return useHome;
+	}
+
+	public int getLevelBat() {
+		return levelBat;
+	}
+
 }

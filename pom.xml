@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>net.aahso.homehausen</groupId>
 	<artifactId>inverter-service</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.3</version>
 	<name>inverter-service</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>
@@ -27,7 +27,7 @@
 		<url/>
 	</scm>
 	<properties>
-		<java.version>21</java.version>
+		<java.version>17</java.version>
 	</properties>
 	<dependencies>
 		<dependency>

@@ -16,7 +16,7 @@ public class WebClientConfig {
 	
 
 	@Bean
-	public WebClient webClient(WebClient.Builder builder) {
+	public WebClient inverterWebClient(WebClient.Builder builder) {
 		//System.out.println("Inverter API URL: "+env.getProperty("dailysun.inverter.apiurl"));
         return builder
             .baseUrl(env.getProperty("app.inverter.apiurl"))
@@ -26,8 +26,17 @@ public class WebClientConfig {
 	}
 	
 	@Bean
+	public WebClient aahsoWebClient(WebClient.Builder builder) {
+        return builder
+            .baseUrl("https://aahso.net/o/pv")
+            .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
+            .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+            .build();
+	}
+
+	@Bean
 	public String passwordFilename() {
 		return env.getProperty("app.inverter.userpasswordfile");
 	}
-	
+
 }
