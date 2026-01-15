@@ -111,7 +111,7 @@ public class Inverter {
 
 						// remove old data points (older than 10 minutes)
 						if (loopCount%100 == 0)
-							listDP.removeIf((DataPoint l) -> l.getTimeStamp() < Instant.now().getEpochSecond() - 3600);
+							listDP.removeIf((DataPoint l) -> l.getTimeStamp() < Instant.now().getEpochSecond() - 600);
 						System.out.println("DataPoints: " + listDP.size());
 
 						// send data to aahso.net
