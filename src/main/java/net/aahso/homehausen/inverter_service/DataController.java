@@ -33,11 +33,6 @@ public class DataController {
 
 		// get latest data from Inverter class
 		DataPoint response = this.inverter.getLatestData();
-		if (response != null) {
-			System.out.println("Response JSON: "+response);
-		}
-		else return null;
-        
         return response;
     }
 	
