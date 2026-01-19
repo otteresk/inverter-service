@@ -2,6 +2,8 @@ package net.aahso.homehausen.inverter_service;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -59,6 +61,7 @@ public class Inverter {
     private final ArrayNode APIrequest = createRequest();
 
 	private LinkedList<DataPoint> listDP = new LinkedList<DataPoint>();
+	private volatile long oldestRelevantLineNumber = 0;
 
 	// Constructor for Inverter
 	public Inverter(@Qualifier("inverterWebClient") WebClient wc, String pwFile,
@@ -229,6 +232,52 @@ public class Inverter {
 		return recentDPs;
 	}
 	
+	// return history (stored in the file) not older than x seconds
+	public LinkedList<DataPoint> getHistory(int seconds) {
+		if (seconds < 1) seconds = 0;
+		if (seconds > 2*86400) seconds = 2*86400;
+
+		System.out.println("Two Days Back Line (before): " + oldestRelevantLineNumber);
+
+		String historyFilename = env.getProperty("app.savefilename");
+		LinkedList<DataPoint> history = new LinkedList<DataPoint>();
+		long threshold = Instant.now().getEpochSecond() - seconds;
+		long twoDaysAgoThreshold = Instant.now().getEpochSecond() - 2*86400;
+
+		try (BufferedReader reader = new BufferedReader(new FileReader(historyFilename))) {
+			String line;
+			long currentLineNumber = 0;
+			
+			// Skip lines before oldestRelevantLineNumber
+			while (currentLineNumber < oldestRelevantLineNumber && (line = reader.readLine()) != null) {
+				currentLineNumber++;
+			}
+			
+			// Read and collect relevant lines
+			while ((line = reader.readLine()) != null) {
+				try {
+					DataPoint dp = objectMapper.readValue(line, DataPoint.class);
+					if (dp.getTimeStamp() >= threshold) {
+						history.add(dp);
+					}
+					// Always update oldestRelevantLineNumber to track the line that is 2 days old
+					if (dp.getTimeStamp() < twoDaysAgoThreshold) {
+						oldestRelevantLineNumber = currentLineNumber + 1;
+					}
+				} catch (IOException e) {
+					logger.warn("Error parsing data point from file: " + line, e);
+				}
+				currentLineNumber++;
+			}
+		} catch (IOException e) {
+			logger.error("Error reading history file: " + historyFilename, e);
+		}
+		
+		System.out.println("Two Days Back Line (now): " + oldestRelevantLineNumber);
+
+		return history;
+	}
+
 	// save data point to file
 	private void saveDataPointToFile(DataPoint dp) {
 		String saveFilename = env.getProperty("app.savefilename");

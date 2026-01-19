@@ -1,6 +1,7 @@
 package net.aahso.homehausen.inverter_service;
 
 import java.util.LinkedList;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,13 +41,13 @@ public class DataController {
     @ResponseBody
     public DataPoint getLatestAverage( @RequestParam(name="seconds", defaultValue="30") int seconds) {
 
-		if (seconds < 4 || seconds > 120 ) seconds = 30;
+		if (seconds < 1 || seconds > 120 ) seconds = 30;
 
 		// get latest data from Inverter class
 		LinkedList<DataPoint> recentDPs = this.inverter.getLatestDataPoints(seconds);
 
 		if (recentDPs.size() < 1) {
-			System.out.println("getLatestDataPoints: No data points");
+			logger.warn("getLatestDataPoints: No data points");
 			return null;
 		}
 	
@@ -76,6 +77,24 @@ public class DataController {
 		levelBat /= count;
 
         return new DataPoint(timeStamp, fromPV, fromGrid, fromBat, useHome, levelBat);
+    }
+
+
+    @GetMapping(path="/latestHistory")
+    @ResponseBody
+    public List<DataPoint> getHistory( @RequestParam(name="seconds", defaultValue="600") int seconds) {
+
+		if (seconds < 1) seconds = 0;
+		if (seconds > 2*86400) seconds = 2*86400;	
+
+		// get latest data from Inverter class
+		LinkedList<DataPoint> recentDPs = this.inverter.getHistory(seconds);
+
+		if (recentDPs.size() < 1) {
+			logger.warn("getHistory: No data points");
+		}
+	
+        return recentDPs;
     }
 
 

@@ -9,6 +9,9 @@ public class DataPoint {
 	private int useHome;
 	private int levelBat;
 	
+	public DataPoint() {
+	}
+	
 	public DataPoint (long timeStamp,
 					int PV,
 					int grid,
@@ -25,26 +28,50 @@ public class DataPoint {
 
 	public long getTimeStamp() {
 		return timeStamp;
-	}	
+	}
+	
+	public void setTimeStamp(long timeStamp) {
+		this.timeStamp = timeStamp;
+	}
 
 	public int getFromPV() {
 		return fromPV;
-	}	
+	}
+	
+	public void setFromPV(int fromPV) {
+		this.fromPV = fromPV;
+	}
 
 	public int getFromGrid() {
 		return fromGrid;
-	}	
+	}
+	
+	public void setFromGrid(int fromGrid) {
+		this.fromGrid = fromGrid;
+	}
 
 	public int getFromBat() {
 		return fromBat;
-	}	
+	}
+	
+	public void setFromBat(int fromBat) {
+		this.fromBat = fromBat;
+	}
 
 	public int getUseHome() {
 		return useHome;
 	}
+	
+	public void setUseHome(int useHome) {
+		this.useHome = useHome;
+	}
 
 	public int getLevelBat() {
 		return levelBat;
+	}
+	
+	public void setLevelBat(int levelBat) {
+		this.levelBat = levelBat;
 	}
 
 }
