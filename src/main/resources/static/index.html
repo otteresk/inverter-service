@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inverter Service - PV Power</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Power Flow</title>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> -->
+    <script src="assets/chart.umd.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -41,7 +42,7 @@
         
         .chart-container {
             position: relative;
-            height: 400px;
+            height: 600px;
             margin-bottom: 20px;
         }
         
@@ -98,8 +99,6 @@
 </head>
 <body>
     <div class="container">
-        <h1>Inverter Service</h1>
-        <p class="subtitle">Power Output - Last 60 minutes</p>
         
         <div id="error" class="error-box" style="display: none;"></div>
         
@@ -139,7 +138,7 @@
             chartContainer.style.display = 'none';
             
             // Fetch data from API
-            fetch('/data/latestHistory?seconds=3600')
+            fetch('/data/latestHistory?seconds=7200')
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
@@ -153,10 +152,12 @@
                     
                     // Extract timestamps and values
                     const labels = data.map(point => formatTime(point.timeStamp));
-                    const directUseValues = data.map(point => point.fromBat < 0 ? point.fromPV + point.fromBat : point.fromPV);
-                    const batValues = data.map(point => point.fromBat > 0 ? point.fromBat : null);
-                    const gridValues = data.map(point => point.fromGrid > 0 ? point.fromGrid : null);
-                    const batNegativeValues = data.map(point => point.fromBat < 0 ? -point.fromBat : null);
+                    const fromBatValues =         data.map(point => point.fromBat > 0 ?  point.fromBat : null);
+                    const toBatValues = data.map(point => point.fromBat < 0 ? -point.fromBat : null);
+                    const fromGridValues =         data.map(point => point.fromGrid > 0 ?  point.fromGrid : null);
+                    const toGridValues = data.map(point => point.fromGrid < 0 ? -point.fromGrid : null);
+                    const pvValues = data.map(point => point.fromPV);
+                    const directUseValues = pvValues.map((value, index) => value - toBatValues[index] - toGridValues[index]);
                     const homeUseValues = data.map(point => point.useHome);
                     
                     // Hide loading
@@ -170,6 +171,14 @@
                         chart.destroy();
                     }
                     
+                    // Check if Chart.js is loaded
+                    if (typeof Chart === 'undefined') {
+                        loadingDiv.style.display = 'none';
+                        errorDiv.innerHTML = '<strong>Error:</strong> Chart.js library failed to load. Please check your internet connection and try refreshing the page.';
+                        errorDiv.style.display = 'block';
+                        return;
+                    }
+
                     // Create new chart
                     const ctx = document.getElementById('pvChart').getContext('2d');
                     chart = new Chart(ctx, {
@@ -181,7 +190,7 @@
                                     label: 'Direct Use (W)',
                                     data: directUseValues,
                                     borderColor: '#4CAF50',
-                                    backgroundColor: 'rgba(76, 175, 80, 0.3)',
+                                    backgroundColor: 'rgba(76, 175, 80, 1)',
                                     borderWidth: 2,
                                     tension: 0.4,
                                     fill: true,
@@ -191,43 +200,56 @@
                                     order: 1
                                 },
                                 {
-                                    label: 'Battery Power (W)',
-                                    data: batValues,
-                                    borderColor: '#2196F3',
-                                    backgroundColor: 'rgba(33, 150, 243, 0.3)',
+                                    label: 'Battery Use (W)',
+                                    data: fromBatValues,
+                                    borderColor: '#3030ff',
+                                    backgroundColor: 'rgba(48, 48, 255, 1)',
                                     borderWidth: 2,
                                     tension: 0.4,
                                     fill: true,
                                     pointRadius: 0,
                                     pointHoverRadius: 5,
                                     stack: 'stack1',
-                                    order: 1
+                                    order: 2
                                 },
                                 {
-                                    label: 'Grid Power (W)',
-                                    data: gridValues,
-                                    borderColor: '#9E9E9E',
-                                    backgroundColor: 'rgba(158, 158, 158, 0.3)',
+                                    label: 'Grid Use (W)',
+                                    data: fromGridValues,
+                                    borderColor: '#a6a6a6',
+                                    backgroundColor: 'rgba(166, 166, 166, 1)',
                                     borderWidth: 2,
                                     tension: 0.4,
                                     fill: true,
                                     pointRadius: 0,
                                     pointHoverRadius: 5,
                                     stack: 'stack1',
-                                    order: 1
+                                    order: 3
                                 },
                                 {
                                     label: 'Battery Charge (W)',
-                                    data: batNegativeValues,
+                                    data: toBatValues,
                                     borderColor: '#81D4FA',
-                                    backgroundColor: 'rgba(129, 212, 250, 0.3)',
+                                    backgroundColor: 'rgba(129, 212, 250, 1)',
                                     borderWidth: 2,
                                     tension: 0.4,
                                     fill: true,
                                     pointRadius: 0,
                                     pointHoverRadius: 5,
                                     stack: 'stack1',
-                                    order: 1
+                                    order: 4
+                                },
+                                {
+                                    label: 'To Grid (W)',
+                                    data: toGridValues,
+                                    borderColor: '#ff9933',
+                                    backgroundColor: 'rgba(255, 153, 51, 1)',
+                                    borderWidth: 2,
+                                    tension: 0.4,
+                                    fill: true,
+                                    pointRadius: 0,
+                                    pointHoverRadius: 5,
+                                    stack: 'stack1',
+                                    order: 5
                                 },
                                 {
                                     label: 'Home Use (W)',
@@ -260,7 +282,7 @@
                                 },
                                 title: {
                                     display: true,
-                                    text: 'Power Output Over Time (PV, Battery, Grid)',
+                                    text: 'Power Flow (PV, Battery, Grid)',
                                     color: '#333',
                                     font: {
                                         size: 16
@@ -269,6 +291,8 @@
                             },
                             scales: {
                                 y: {
+                                    min: 0,
+                                    stacked: true,
                                     beginAtZero: true,
                                     title: {
                                         display: true,
