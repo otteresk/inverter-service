@@ -19,12 +19,12 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
+import tools.jackson.core.exc.StreamReadException;
+import tools.jackson.core.JacksonException;
 
 import jakarta.annotation.PreDestroy;
 
@@ -101,7 +101,7 @@ public class Inverter {
 						responseJson = fetchDataFromInverter();
 						//System.out.println("Response: " + responseJson);
 						if (responseJson == null) {
-							System.out.println("No response from Inverter API");
+							logger.warn("No response from Inverter API");
 							continue;
 						}
 
@@ -126,7 +126,7 @@ public class Inverter {
                         running = false;
                     } catch (Exception e) {
                         // Log error but keep running
-                        System.err.println("Error in Data Pump: " + e.getMessage());
+                        logger.error("Error in Data Pump: " + e.getMessage());
                     }
                 }
             } finally {
@@ -137,7 +137,7 @@ public class Inverter {
 
 	// get data point from JSON response
 	private DataPoint extractDataFromJson(String respJson)
-		throws JsonProcessingException, JsonParseException {
+		throws JacksonException, StreamReadException {
 
 		JsonNode jsonNode = objectMapper.readTree(respJson);
 		//System.out.println("Parsed JSON size: " + jsonNode.size());
@@ -226,7 +226,6 @@ public class Inverter {
 	    while (iterator.hasNext()) {
 			DataPoint dp = iterator.next();
 			if (dp.getTimeStamp() < threshold) break;
-			System.out.println(dp.getTimeStamp());
        		recentDPs.add(dp);
 		}
 		return recentDPs;
@@ -264,7 +263,7 @@ public class Inverter {
 					if (dp.getTimeStamp() < twoDaysAgoThreshold) {
 						oldestRelevantLineNumber = currentLineNumber + 1;
 					}
-				} catch (IOException e) {
+				} catch (Exception e) {
 					logger.warn("Error parsing data point from file: " + line, e);
 				}
 				currentLineNumber++;
