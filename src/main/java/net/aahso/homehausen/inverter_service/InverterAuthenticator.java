@@ -91,9 +91,9 @@ public class InverterAuthenticator {
         
         // Extract information from the response
         int rounds = authMeResponseObject.get("rounds").asInt();
-        String salt = authMeResponseObject.get("salt").asText();
-        String serverNonce = authMeResponseObject.get("nonce").asText();
-        String transactionId = authMeResponseObject.get("transactionId").asText();
+        String salt = authMeResponseObject.get("salt").asString();
+        String serverNonce = authMeResponseObject.get("nonce").asString();
+        String transactionId = authMeResponseObject.get("transactionId").asString();
         
         // Do the cryptography stuff (magic happens here)
         byte[] saltedPasswort;
@@ -150,8 +150,8 @@ public class InverterAuthenticator {
         }
         
         // Extract information from the response
-        byte[] signature = Base64.getDecoder().decode(authFinishResponseObject.get("signature").asText());
-        String token = authFinishResponseObject.get("token").asText();
+        byte[] signature = Base64.getDecoder().decode(authFinishResponseObject.get("signature").asString());
+        String token = authFinishResponseObject.get("token").asString();
 
         // Validate provided signature against calculated signature
         if (!java.util.Arrays.equals(serverSignature, signature)) {
@@ -245,7 +245,7 @@ public class InverterAuthenticator {
         }
         
          // Extract information from the response
-        String sessionId = createSessionResponseObject.get("sessionId").asText();
+        String sessionId = createSessionResponseObject.get("sessionId").asString();
         logger.info("Successfully generated a Session ID.");
         
         return sessionId;
