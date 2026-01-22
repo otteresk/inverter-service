@@ -13,17 +13,17 @@ public class DataPoint {
 	}
 	
 	public DataPoint (long timeStamp,
-					int PV,
-					int grid,
-					int power_bat,
-					int home,
-					int batSoC){
+					int fromPV,
+					int fromGrid,
+					int fromBat,
+					int useHome,
+					int levelBat){
 		this.timeStamp = timeStamp;
-		this.fromPV = PV;
-		this.fromGrid = grid;
-		this.fromBat = power_bat;
-		this.useHome = home;
-		this.levelBat = batSoC;
+		this.fromPV = fromPV;
+		this.fromGrid = fromGrid;
+		this.fromBat = fromBat;
+		this.useHome = useHome;
+		this.levelBat = levelBat;
 	}
 
 	public long getTimeStamp() {

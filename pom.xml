@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>net.aahso.homehausen</groupId>
 	<artifactId>inverter-service</artifactId>
-	<version>0.1.1</version>
+	<version>0.1.2</version>
 	<name>inverter-service</name>
 	<description>Inverter Microservice</description>
 	<url/>
