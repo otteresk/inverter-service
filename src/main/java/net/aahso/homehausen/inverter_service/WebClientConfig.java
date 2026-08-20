@@ -3,7 +3,6 @@ package net.aahso.homehausen.inverter_service;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.context.annotation.Bean;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -11,8 +10,11 @@ import org.springframework.http.MediaType;
 @Configuration
 public class WebClientConfig {
 
-	@Autowired
-	private Environment env;
+    private final Environment env;
+
+    public WebClientConfig(Environment env) {
+        this.env = env;
+    }
 	
 
 	@Bean
@@ -32,11 +34,6 @@ public class WebClientConfig {
             .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
             .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
             .build();
-	}
-
-	@Bean
-	public String passwordFilename() {
-		return env.getProperty("app.inverter.userpasswordfile");
 	}
 
 }
