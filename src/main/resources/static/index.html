@@ -42,7 +42,13 @@
         
         .chart-container {
             position: relative;
-            height: 600px;
+            height: 55vh;
+            margin-bottom: 20px;
+        }
+
+        .battery-chart-container {
+            position: relative;
+            height: 25vh;
             margin-bottom: 20px;
         }
         
@@ -77,23 +83,51 @@
             100% { transform: rotate(360deg); }
         }
         
-        .refresh-button {
-            background-color: #2196F3;
-            color: white;
-            border: none;
-            padding: 10px 20px;
+        .range-toggle {
+            display: flex;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .range-button {
+            background-color: #f5f5f5;
+            color: #333;
+            border: 1px solid #ccc;
+            padding: 10px 16px;
             border-radius: 4px;
             cursor: pointer;
             font-size: 14px;
-            margin-top: 20px;
         }
-        
-        .refresh-button:hover {
-            background-color: #1976D2;
+
+        .range-button:hover,
+        .range-button.active {
+            background-color: #2196F3;
+            border-color: #2196F3;
+            color: white;
         }
-        
-        .refresh-button:active {
-            transform: scale(0.98);
+
+        @media (max-width: 600px) {
+            body {
+                padding: 0;
+            }
+
+            .container {
+                width: 100%;
+                max-width: none;
+                min-height: 100vh;
+                border-radius: 0;
+                padding: 12px;
+            }
+
+            .chart-container {
+                width: 100%;
+                height: 55vh;
+            }
+
+            .battery-chart-container {
+                width: 100%;
+                height: 25vh;
+            }
         }
     </style>
 </head>
@@ -110,12 +144,21 @@
         <div id="chartContainer" class="chart-container" style="display: none;">
             <canvas id="pvChart"></canvas>
         </div>
-        
-        <button class="refresh-button" onclick="loadData()">Refresh Data</button>
+
+        <div id="batteryChartContainer" class="battery-chart-container" style="display: none;">
+            <canvas id="batteryChart"></canvas>
+        </div>
+
+        <div class="range-toggle" role="group" aria-label="Data range">
+            <button id="oneHourButton" class="range-button active" type="button" onclick="setDataRange(3600)">1 hour</button>
+            <button id="twoHourButton" class="range-button" type="button" onclick="setDataRange(7200)">2 hours</button>
+        </div>
     </div>
 
     <script>
         let chart = null;
+        let batteryChart = null;
+        let selectedDataRange = 3600;
         
         function formatTime(timestamp) {
             const date = new Date(timestamp * 1000);
@@ -127,18 +170,27 @@
             });
         }
         
+        function setDataRange(seconds) {
+            selectedDataRange = seconds;
+            document.getElementById('oneHourButton').classList.toggle('active', seconds === 3600);
+            document.getElementById('twoHourButton').classList.toggle('active', seconds === 7200);
+            loadData();
+        }
+
         function loadData() {
             const loadingDiv = document.getElementById('loading');
             const errorDiv = document.getElementById('error');
             const chartContainer = document.getElementById('chartContainer');
+            const batteryChartContainer = document.getElementById('batteryChartContainer');
             
             // Show loading, hide others
             loadingDiv.style.display = 'block';
             errorDiv.style.display = 'none';
             chartContainer.style.display = 'none';
+            batteryChartContainer.style.display = 'none';
             
             // Fetch data from API
-            fetch('/data/latestHistory?seconds=7200')
+            fetch(`/data/latestHistory?seconds=${selectedDataRange}`)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
@@ -159,16 +211,21 @@
                     const pvValues = data.map(point => point.fromPV);
                     const directUseValues = pvValues.map((value, index) => value - toBatValues[index] - toGridValues[index]);
                     const homeUseValues = data.map(point => point.useHome);
+                    const batteryLevelValues = data.map(point => point.levelBat);
                     
                     // Hide loading
                     loadingDiv.style.display = 'none';
                     
                     // Show chart container
                     chartContainer.style.display = 'block';
+                    batteryChartContainer.style.display = 'block';
                     
                     // Destroy old chart if it exists
                     if (chart) {
                         chart.destroy();
+                    }
+                    if (batteryChart) {
+                        batteryChart.destroy();
                     }
                     
                     // Check if Chart.js is loaded
@@ -304,9 +361,96 @@
                                     },
                                     grid: {
                                         color: 'rgba(0, 0, 0, 0.05)'
+                                    },
+                                    afterFit: scale => {
+                                        scale.width = 60;
                                     }
                                 },
                                 x: {
+                                    min: 0,
+                                    max: labels.length - 1,
+                                    offset: false,
+                                    title: {
+                                        display: true,
+                                        text: 'Time',
+                                        color: '#666'
+                                    },
+                                    ticks: {
+                                        color: '#666',
+                                        maxRotation: 45,
+                                        minRotation: 0
+                                    },
+                                    grid: {
+                                        color: 'rgba(0, 0, 0, 0.05)'
+                                    }
+                                }
+                            }
+                        }
+                    });
+
+                    const batteryCtx = document.getElementById('batteryChart').getContext('2d');
+                    batteryChart = new Chart(batteryCtx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Battery Level (%)',
+                                data: batteryLevelValues,
+                                borderColor: '#3030ff',
+                                backgroundColor: 'rgba(48, 48, 255, 0.15)',
+                                borderWidth: 2,
+                                tension: 0.4,
+                                fill: true,
+                                pointRadius: 0,
+                                pointHoverRadius: 5
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false,
+                                    position: 'top',
+                                    labels: {
+                                        color: '#333',
+                                        font: {
+                                            size: 14
+                                        }
+                                    }
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Battery Level',
+                                    color: '#333',
+                                    font: {
+                                        size: 16
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    min: 0,
+                                    max: 100,
+                                    title: {
+                                        display: true,
+                                        text: 'Level (%)',
+                                        color: '#666'
+                                    },
+                                    ticks: {
+                                        color: '#666'
+                                    },
+                                    grid: {
+                                        color: 'rgba(0, 0, 0, 0.05)'
+                                    },
+                                    afterFit: scale => {
+                                        scale.width = 60;
+                                    }
+                                },
+                                x: {
+                                    min: 0,
+                                    max: labels.length - 1,
+                                    offset: false,
                                     title: {
                                         display: true,
                                         text: 'Time',
